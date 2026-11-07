@@ -11,7 +11,7 @@ class NicheBrief(BaseModel):
     )
     phrase_on_product: str = Field(..., description="Exact text to render on the product")
     seed_keywords: List[str] = Field(..., description="Proven high-velocity search terms from Etsy")
-    product_category: Literal["apparel", "candle", "mug", "tote"] = "apparel"
+    product_category: Literal["apparel", "candle", "portrait", "mug", "tote"] = "apparel"
 
 
 class DesignAsset(BaseModel):
@@ -53,6 +53,7 @@ class EtsySEOListing(BaseModel):
 
 class PipelineState(BaseModel):
     seed_category: str
+    store_id: str = "store_1"
     niche_brief: Optional[NicheBrief] = None
     design_asset: Optional[DesignAsset] = None
     audit_result: Optional[AuditResult] = None

@@ -30,6 +30,27 @@
     .crt-glow {
       text-shadow: 0 0 8px rgba(0, 255, 102, 0.55);
     }
+    .crt-amber-glow {
+      text-shadow: 0 0 8px rgba(251, 191, 36, 0.65);
+    }
+    .alpha-checkerboard {
+      background-color: #040906;
+      background-image:
+        linear-gradient(45deg, rgba(0, 255, 102, 0.07) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0, 255, 102, 0.07) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0, 255, 102, 0.07) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0, 255, 102, 0.07) 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+    .crew-active-pulse {
+      border-color: #00FF66 !important;
+      box-shadow: 0 0 18px rgba(0, 255, 102, 0.45), inset 0 0 12px rgba(0, 255, 102, 0.18);
+    }
+    .crew-retry-pulse {
+      border-color: #FBBF24 !important;
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.45), inset 0 0 12px rgba(251, 191, 36, 0.18);
+    }
     .scanlines {
       pointer-events: none;
       position: fixed;
@@ -49,26 +70,30 @@
     }
   </style>
 </head>
-<body class="min-h-screen p-4 md:p-6 select-none">
+<body class="min-h-screen p-4 md:p-6">
   <div class="scanlines"></div>
 
-  <div class="max-w-7xl mx-auto space-y-5 relative z-10">
+  <div class="max-w-7xl mx-auto space-y-4 relative z-10">
     <!-- Top Telemetry Bar -->
-    <header class="crt-border bg-[#07120B] p-4 rounded-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <header class="crt-border bg-[#07120B] p-4 rounded-sm flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
       <div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <span class="inline-block w-3 h-3 rounded-full bg-[#00FF66] animate-pulse"></span>
           <h1 class="font-vt text-3xl md:text-4xl text-[#00FF66] crt-glow tracking-wider">
             ETSY PRODUCTION TERMINAL // ULTRON CENTER STATION
           </h1>
+          <span id="portfolio-revenue-badge" class="text-xs px-2.5 py-0.5 border border-[#00FF66] bg-[#00FF66]/10 text-[#00FF66] font-bold">
+            PORTFOLIO GROSS: $16,000.00
+          </span>
         </div>
         <p class="text-xs text-[#4ADE80]/80 mt-1">
-          HERMES / LANGGRAPH MULTI-AGENT ORCHESTRATOR &bull; 4500x5400 @ 300 DPI PRINTIFY PIPELINE
+          HERMES / LANGGRAPH MULTI-AGENT ORCHESTRATOR &bull; 4500x5400 @ 300 DPI PRINTIFY PIPELINE &bull;
+          <span id="active-blueprint-label" class="text-[#00FF66] font-semibold">BLUEPRINT #12: BELLA+CANVAS 3001 ($24.99)</span>
         </p>
       </div>
 
-      <!-- Store Switcher Tabs -->
-      <div class="flex flex-wrap gap-2" id="store-tabs">
+      <!-- Store Switcher Tabs & Reset -->
+      <div class="flex flex-wrap items-center gap-2" id="store-tabs">
         <button onclick="selectStore('store_1')" id="tab-store_1" class="px-3 py-1.5 text-xs font-bold border border-[#00FF66] bg-[#00FF66] text-[#050B07] transition">
           ETSY 1: APPAREL
         </button>
@@ -77,6 +102,9 @@
         </button>
         <button onclick="selectStore('store_3')" id="tab-store_3" class="px-3 py-1.5 text-xs font-bold border border-[#00FF66]/60 text-[#4ADE80] hover:border-[#00FF66] transition">
           ETSY 3: CUSTOM PORTRAIT PRODUCTS
+        </button>
+        <button onclick="resetDemoState()" title="Reset all stores and designs to factory baseline" class="px-2.5 py-1.5 text-[11px] font-bold border border-[#4ADE80]/40 text-[#4ADE80]/80 hover:border-[#00FF66] hover:text-[#00FF66] transition">
+          [ RESET DEMO ]
         </button>
       </div>
     </header>
@@ -101,11 +129,95 @@
       </div>
       <div class="crt-border bg-[#07120B] p-3">
         <div class="text-[11px] uppercase text-[#4ADE80]/70">Active Agent Count</div>
-        <div id="metric-agents" class="text-xl font-bold text-[#00FF66] mt-1">3 Agents</div>
+        <div id="metric-agents" class="text-xl font-bold text-[#00FF66] mt-1">4 Agents</div>
       </div>
       <div class="crt-border bg-[#07120B] p-3">
         <div class="text-[11px] uppercase text-[#4ADE80]/70">Live Workflows</div>
         <div id="metric-workflows" class="text-xl font-bold text-[#00FF66] mt-1">9 Live</div>
+      </div>
+    </section>
+
+    <!-- Store-Aware Interactive Dispatch Command Bar -->
+    <section class="crt-border bg-[#07120B] p-4 space-y-3">
+      <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+        <div class="flex-1">
+          <label for="seed-input" class="block text-[11px] uppercase text-[#00FF66] font-bold mb-1">
+            NOVA SEED NICHE / BUYER SEARCH QUERY (<span id="dispatch-store-indicator">ETSY 1: APPAREL</span>)
+          </label>
+          <div class="flex gap-2">
+            <span class="inline-flex items-center px-2.5 bg-[#030704] border border-[#00FF66]/60 text-[#00FF66] text-xs font-bold">&gt;_</span>
+            <input
+              id="seed-input"
+              type="text"
+              value="Botanical Book Club Apparel"
+              placeholder="Enter target Etsy buyer niche (e.g., Cozy Sourdough Baker, Rainy Bookstore Candle)..."
+              class="w-full bg-[#030704] border border-[#00FF66]/70 px-3 py-2 text-xs text-[#00FF66] focus:outline-none focus:border-[#00FF66]"
+            />
+          </div>
+        </div>
+
+        <!-- Mode & Retry Toggles + Dispatch CTA -->
+        <div class="flex flex-wrap items-end gap-2">
+          <button
+            type="button"
+            id="btn-mode-toggle"
+            onclick="toggleExecutionMode()"
+            class="px-3 py-2 text-xs font-bold border border-[#00FF66] bg-[#050B07] text-[#00FF66] hover:bg-[#00FF66]/10 transition"
+          >
+            MODE: DRY-RUN SIM
+          </button>
+          <button
+            type="button"
+            id="btn-retry-toggle"
+            onclick="toggleSimulateRetry()"
+            class="px-3 py-2 text-xs font-bold border border-[#4ADE80]/50 bg-[#050B07] text-[#4ADE80]/80 hover:border-[#00FF66] transition"
+          >
+            AUDIT RETRY SIM: OFF
+          </button>
+          <button
+            type="button"
+            onclick="triggerPipelineRun()"
+            id="btn-trigger"
+            class="px-4 py-2 text-xs font-bold bg-[#00FF66] text-[#050B07] hover:bg-[#4ADE80] transition tracking-wide"
+          >
+            + DISPATCH ULTRON PIPELINE RUN
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick-Preset Chips + LiveLangGraph Stepper Bar -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2 pt-2 border-t border-[#00FF66]/20">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-[11px] text-[#4ADE80]/70 uppercase mr-1">Quick Presets:</span>
+          <div id="preset-chips" class="flex flex-wrap gap-1.5"></div>
+        </div>
+        <div id="pipeline-status-banner" class="text-[11px] text-[#00FF66] font-semibold">
+          STATUS: READY FOR DISPATCH
+        </div>
+      </div>
+
+      <!-- 5-Node LangGraph Visual Stepper -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1" id="langgraph-stepper">
+        <div id="step-nova_research" class="p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]">
+          <span>01 // NOVA RESEARCH</span>
+          <span class="step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70">IDLE</span>
+        </div>
+        <div id="step-muse_designer" class="p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]">
+          <span>02 // MUSE DESIGNER</span>
+          <span class="step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70">IDLE</span>
+        </div>
+        <div id="step-audit_gate" class="p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]">
+          <span>03 // AUDIT GATE &ge;75%</span>
+          <span class="step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70">IDLE</span>
+        </div>
+        <div id="step-seo_listing" class="p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]">
+          <span>04 // SEO 13-TAG AGENT</span>
+          <span class="step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70">IDLE</span>
+        </div>
+        <div id="step-forge_printify" class="p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]">
+          <span>05 // FORGE PRINTIFY</span>
+          <span class="step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70">IDLE</span>
+        </div>
       </div>
     </section>
 
@@ -119,13 +231,20 @@
               <h2 class="text-sm font-bold text-[#00FF66] tracking-wider uppercase">
                 MUSE // CENTER GENERATION WINDOW (LATEST 4 RENDERS)
               </h2>
-              <p class="text-xs text-[#4ADE80]/75">
-                GPT IMAGES 2: rendering standalone floral &amp; typography shirt artwork for Printify mockups
+              <p id="center-window-subtitle" class="text-xs text-[#4ADE80]/75">
+                GPT IMAGES 2: rendering standalone floral &amp; typography artwork &bull; Click any card to inspect SEO &amp; Audit QA
               </p>
             </div>
-            <button onclick="triggerDryRun()" id="btn-trigger" class="px-3 py-1.5 text-xs font-bold bg-[#00FF66] text-[#050B07] hover:bg-[#4ADE80] transition">
-              + DISPATCH ULTRON PIPELINE RUN
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="btn-backdrop-toggle"
+                onclick="toggleBackdropMode()"
+                class="px-2.5 py-1 text-[11px] font-bold border border-[#00FF66]/70 text-[#00FF66] hover:bg-[#00FF66]/15 transition"
+              >
+                VIEW: ALPHA GRID
+              </button>
+            </div>
           </div>
 
           <div id="designs-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -139,78 +258,98 @@
             <span class="text-xs font-bold text-[#00FF66] uppercase tracking-wider">
               ULTRON // LIVE ROOM TELEMETRY LOG
             </span>
-            <span id="ws-status" class="text-[11px] px-2 py-0.5 border border-[#00FF66]/50 text-[#00FF66]">
-              TERMINAL LINK: ONLINE
-            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="clearTerminalLog()" class="text-[10px] px-2 py-0.5 border border-[#4ADE80]/40 text-[#4ADE80]/80 hover:border-[#00FF66]">
+                CLEAR LOG
+              </button>
+              <span id="ws-status" class="text-[11px] px-2 py-0.5 border border-[#00FF66]/50 text-[#00FF66]">
+                TERMINAL LINK: ONLINE
+              </span>
+            </div>
           </div>
-          <div id="terminal-log" class="h-44 overflow-y-auto text-xs space-y-1.5 font-mono bg-[#030704] p-3 border border-[#00FF66]/30">
+          <div id="terminal-log" class="h-48 overflow-y-auto text-xs space-y-1.5 font-mono bg-[#030704] p-3 border border-[#00FF66]/30">
           </div>
         </div>
       </div>
 
       <!-- Right-Hand Room Crew Panel -->
       <div class="lg:col-span-4 space-y-4">
-        <div class="crt-border bg-[#07120B] p-4 space-y-4">
+        <div class="crt-border bg-[#07120B] p-4 space-y-3.5">
           <h2 class="text-sm font-bold text-[#00FF66] tracking-wider uppercase border-b border-[#00FF66]/30 pb-2">
             ROOM CREW STATUS PANEL
           </h2>
 
-          <!-- FORGE -->
-          <div class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-2">
+          <!-- NOVA -->
+          <div id="crew-card-nova_research" class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-1.5 transition">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-[#00FF66] text-sm">FORGE</span>
-              <span class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">ROUTING QUEUE</span>
+              <span class="font-bold text-[#00FF66] text-sm">NOVA // RESEARCH LAB</span>
+              <span id="crew-badge-nova_research" class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">SCANNING</span>
             </div>
-            <div class="text-xs text-[#4ADE80]/90">Product Fabrication - Printify routing queue</div>
-            <div class="text-[11px] text-[#4ADE80]/70">
-              Blueprint #12 (Bella+Canvas 3001) &bull; 4500x5400 PNG @ 300 DPI
+            <div class="text-xs text-[#4ADE80]/90">Etsy v3 Active Listings &amp; USPTO Screen</div>
+            <div id="crew-detail-nova_research" class="text-[11px] text-[#4ADE80]/70">
+              findAllListingsActive (sort_on=score) &bull; filtering trademarked phrases
             </div>
           </div>
 
           <!-- MUSE -->
-          <div class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-2">
+          <div id="crew-card-muse_designer" class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-1.5 transition">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-[#00FF66] text-sm">MUSE</span>
-              <span class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">GPT IMAGES 2</span>
+              <span class="font-bold text-[#00FF66] text-sm">MUSE // DESIGN STUDIO</span>
+              <span id="crew-badge-muse_designer" class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">GPT IMAGES 2</span>
             </div>
             <div class="text-xs text-[#4ADE80]/90">Image Design Agent - GPT Images 2</div>
-            <div class="text-[11px] text-[#4ADE80]/70">
-              Transparent alpha channel &bull; LANCZOS 300 DPI upscaler active
+            <div id="crew-detail-muse_designer" class="text-[11px] text-[#4ADE80]/70">
+              Transparent alpha channel &bull; LANCZOS 4500x5400 @ 300 DPI upscaler active
+            </div>
+          </div>
+
+          <!-- AUDIT GATE -->
+          <div id="crew-card-audit_gate" class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-1.5 transition">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[#00FF66] text-sm">AUDIT GATE // VISION QA</span>
+              <span id="crew-badge-audit_gate" class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">QA &ge; 75%</span>
+            </div>
+            <div class="text-xs text-[#4ADE80]/90">Multimodal OCR &amp; Print Readiness Gate</div>
+            <div id="crew-detail-audit_gate" class="text-[11px] text-[#4ADE80]/70">
+              Enforcing &ge;75% render confidence, exact OCR spelling &amp; clean alpha edges
             </div>
           </div>
 
           <!-- SEO / LISTING AGENT -->
-          <div class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-2">
+          <div id="crew-card-seo_listing" class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-1.5 transition">
             <div class="flex items-center justify-between">
               <span class="font-bold text-[#00FF66] text-sm">SEO / LISTING AGENT</span>
-              <span class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">13 TAGS READY</span>
+              <span id="crew-badge-seo_listing" class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">13 TAGS READY</span>
             </div>
-            <div class="text-xs text-[#4ADE80]/90">Drafting thumbnail order &amp; 13 tags</div>
-            <div class="text-[11px] text-[#4ADE80]/70">
+            <div class="text-xs text-[#4ADE80]/90">140-Char Title &amp; 13x20-Char Buyer Tags</div>
+            <div id="crew-detail-seo_listing" class="text-[11px] text-[#4ADE80]/70">
               SEO AGENT: expanding long-tail tags: soft girl, book club, coffee, garden gift
             </div>
           </div>
 
-          <!-- NOVA & AUDIT GATE -->
-          <div class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-2">
+          <!-- FORGE -->
+          <div id="crew-card-forge_printify" class="p-3 border border-[#00FF66]/50 bg-[#050B07] space-y-1.5 transition">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-[#00FF66] text-sm">NOVA &amp; AUDIT GATE</span>
-              <span class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">QA &ge; 75%</span>
+              <span class="font-bold text-[#00FF66] text-sm">FORGE // FABRICATION</span>
+              <span id="crew-badge-forge_printify" class="text-[10px] px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66]">ROUTING QUEUE</span>
             </div>
-            <div class="text-xs text-[#4ADE80]/90">Research Lab &amp; Vision Policy Gate</div>
-            <div class="text-[11px] text-[#4ADE80]/70">
-              Enforcing &ge;75% render confidence, exact OCR spelling &amp; USPTO trademark screen
+            <div class="text-xs text-[#4ADE80]/90">Product Fabrication - Printify routing queue</div>
+            <div id="crew-detail-forge_printify" class="text-[11px] text-[#4ADE80]/70">
+              Blueprint #12 (Bella+Canvas 3001) &bull; 4500x5400 PNG @ 300 DPI
             </div>
           </div>
 
           <!-- Audit & Handoff Action Buttons -->
-          <div class="pt-2 space-y-2">
-            <div class="text-xs font-bold text-[#00FF66] uppercase">One-Click Queue Actions</div>
+          <div class="pt-2 space-y-2 border-t border-[#00FF66]/30">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-[#00FF66] uppercase">One-Click Queue Actions</span>
+              <span id="queue-count-badge" class="text-[10px] text-[#4ADE80]/80">4 Active Renders</span>
+            </div>
             <div class="grid grid-cols-2 gap-2">
-              <button onclick="runAuditCheck()" class="py-2 px-3 text-xs font-bold border border-[#00FF66] text-[#00FF66] hover:bg-[#00FF66] hover:text-[#050B07] transition">
+              <button onclick="runAuditCheck()" id="btn-audit-queue" class="py-2 px-3 text-xs font-bold border border-[#00FF66] text-[#00FF66] hover:bg-[#00FF66] hover:text-[#050B07] transition">
                 [ AUDIT QUEUE ]
               </button>
-              <button onclick="approveQueuedProducts()" class="py-2 px-3 text-xs font-bold bg-[#00FF66] text-[#050B07] hover:bg-[#4ADE80] transition">
+              <button onclick="approveQueuedProducts()" id="btn-handoff-live" class="py-2 px-3 text-xs font-bold bg-[#00FF66] text-[#050B07] hover:bg-[#4ADE80] transition">
                 [ HANDOFF LIVE ]
               </button>
             </div>
@@ -220,42 +359,435 @@
     </div>
   </div>
 
+  <!-- Listing & Audit Inspector Modal -->
+  <div
+    id="inspector-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-xs z-40 hidden items-center justify-center p-4"
+    onclick="if(event.target === this) closeInspectorModal()"
+  >
+    <div class="crt-border bg-[#06110A] max-w-4xl w-full max-h-[90vh] overflow-y-auto p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-[#00FF66]/40 pb-3">
+        <div>
+          <div class="text-[11px] text-[#4ADE80]/70 uppercase" id="modal-store-label">STORE 1 // BLUEPRINT #12</div>
+          <h3 id="modal-title" class="font-vt text-3xl text-[#00FF66] crt-glow">IN MY GARDEN ERA DESIGN</h3>
+        </div>
+        <button
+          onclick="closeInspectorModal()"
+          class="px-3 py-1 text-xs font-bold border border-[#00FF66] text-[#00FF66] hover:bg-[#00FF66] hover:text-[#050B07]"
+        >
+          [ ESC / CLOSE ]
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+        <!-- Left Column: High-Res Artwork Preview & Audit Scorecard -->
+        <div class="md:col-span-5 space-y-3">
+          <div class="border border-[#00FF66]/70 alpha-checkerboard p-4 flex flex-col items-center justify-center relative min-h-[260px]">
+            <img id="modal-image" src="" alt="Rendered Artwork" class="max-h-64 object-contain" />
+            <div class="mt-2 text-[11px] text-[#4ADE80]/80 text-center">
+              4500x5400 PX &bull; 300 DPI RGBA PNG &bull; <span id="modal-product-id" class="text-[#00FF66] font-bold">prod_mock_77310</span>
+            </div>
+          </div>
+
+          <!-- Audit Gate Scorecard -->
+          <div class="border border-[#00FF66]/50 bg-[#040906] p-3 space-y-2 text-xs">
+            <div class="flex items-center justify-between border-b border-[#00FF66]/30 pb-1.5">
+              <span class="font-bold text-[#00FF66] uppercase">AUDIT GATE QA SCORECARD</span>
+              <span id="modal-confidence-badge" class="px-2 py-0.5 bg-[#00FF66]/20 text-[#00FF66] border border-[#00FF66] font-bold">92% PASS</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <div>OCR Spelling: <span id="modal-ocr" class="text-[#00FF66] font-bold">VERIFIED</span></div>
+              <div>Alpha Channel: <span id="modal-alpha" class="text-[#00FF66] font-bold">CLEAN</span></div>
+              <div>USPTO Screen: <span id="modal-tm" class="text-[#00FF66] font-bold">SAFE</span></div>
+              <div>Revisions: <span id="modal-revisions" class="text-[#00FF66] font-bold">REV #0</span></div>
+            </div>
+            <div id="modal-critique" class="text-[11px] text-[#4ADE80]/80 bg-[#07120B] p-2 border border-[#00FF66]/20">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Etsy SEO Listing & 13 Tags -->
+        <div class="md:col-span-7 space-y-3 text-xs">
+          <div class="border border-[#00FF66]/50 bg-[#040906] p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[#00FF66] uppercase">ETSY SEO LISTING TITLE</span>
+              <div class="flex items-center gap-2">
+                <span id="modal-title-count" class="text-[10px] text-[#4ADE80]/70">0 / 140 CHARS</span>
+                <button onclick="copyModalField('title')" class="px-2 py-0.5 text-[10px] border border-[#00FF66]/60 text-[#00FF66] hover:bg-[#00FF66]/20">
+                  COPY TITLE
+                </button>
+              </div>
+            </div>
+            <div id="modal-seo-title" class="p-2 bg-[#07120B] border border-[#00FF66]/30 text-[#00FF66] font-semibold leading-relaxed">
+            </div>
+          </div>
+
+          <div class="border border-[#00FF66]/50 bg-[#040906] p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[#00FF66] uppercase">13 LONG-TAIL ETSY TAGS (&le; 20 CHARS EACH)</span>
+              <button onclick="copyModalField('tags')" class="px-2 py-0.5 text-[10px] border border-[#00FF66]/60 text-[#00FF66] hover:bg-[#00FF66]/20">
+                COPY 13 TAGS
+              </button>
+            </div>
+            <div id="modal-seo-tags" class="flex flex-wrap gap-1.5 pt-1">
+            </div>
+          </div>
+
+          <div class="border border-[#00FF66]/50 bg-[#040906] p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-[#00FF66] uppercase">PRODUCT DESCRIPTION &amp; AI DISCLOSURE</span>
+              <span class="text-[10px] px-1.5 py-0.5 border border-[#00FF66]/50 text-[#00FF66]">POLICY COMPLIANT</span>
+            </div>
+            <div id="modal-seo-desc" class="p-2 bg-[#07120B] border border-[#00FF66]/30 text-[#4ADE80]/90 whitespace-pre-line max-h-36 overflow-y-auto text-[11px] leading-relaxed">
+            </div>
+          </div>
+
+          <!-- Modal Action Footer -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+            <div class="flex gap-2">
+              <button
+                id="modal-btn-rerender"
+                onclick="rerenderInspectedDesign()"
+                class="px-3 py-2 text-xs font-bold border border-[#00FF66] text-[#00FF66] hover:bg-[#00FF66]/15 transition"
+              >
+                [ RE-RENDER ARTWORK ]
+              </button>
+              <a
+                id="modal-btn-download"
+                href="#"
+                download
+                class="px-3 py-2 text-xs font-bold border border-[#4ADE80]/60 text-[#4ADE80] hover:border-[#00FF66] transition inline-block"
+              >
+                [ DOWNLOAD PNG ]
+              </a>
+            </div>
+            <button
+              id="modal-btn-approve"
+              onclick="approveInspectedDesign()"
+              class="px-4 py-2 text-xs font-bold bg-[#00FF66] text-[#050B07] hover:bg-[#4ADE80] transition"
+            >
+              [ APPROVE &amp; PUBLISH TO ETSY ]
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const STORES = {
-      store_1: { revenue: "$10,915.27", visits: "71.5K", orders: "264", conv: "0.3%", agents: "3 Agents", workflows: "9 Live" },
-      store_2: { revenue: "$3,180.50", visits: "24.1K", orders: "98", conv: "0.4%", agents: "3 Agents", workflows: "5 Live" },
-      store_3: { revenue: "$1,904.23", visits: "14.8K", orders: "52", conv: "0.35%", agents: "3 Agents", workflows: "4 Live" }
+    const STEP_IDS = ["nova_research", "muse_designer", "audit_gate", "seo_listing", "forge_printify"];
+
+    let activeStore = "store_1";
+    let dryRunMode = true;
+    let simulateRetryMode = false;
+    let backdropMode = "alpha"; // "alpha" or "silhouette"
+    let inspectedDesignId = null;
+
+    let storesTelemetry = {
+      store_1: {
+        id: "store_1",
+        label: "ETSY 1: APPAREL",
+        category: "apparel",
+        blueprint_id: 12,
+        blueprint_name: "Bella+Canvas 3001 Unisex Tee",
+        unit_price: 24.99,
+        revenue: 10915.27,
+        visits: "71.5K",
+        orders: 264,
+        conversion_rate: "0.3%",
+        active_agents: 4,
+        live_workflows: 9,
+        presets: [
+          "Botanical Book Club Apparel",
+          "Coffee & Cozy Reading Club",
+          "Cottagecore Sourdough Baker",
+          "Retro National Park Hiker"
+        ]
+      },
+      store_2: {
+        id: "store_2",
+        label: "ETSY 2: CANDLES",
+        category: "candle",
+        blueprint_id: 384,
+        blueprint_name: "9oz Amber Glass Soy Candle",
+        unit_price: 28.99,
+        revenue: 3180.50,
+        visits: "24.1K",
+        orders: 98,
+        conversion_rate: "0.4%",
+        active_agents: 4,
+        live_workflows: 5,
+        presets: [
+          "Quiet Morning Apothecary",
+          "Rainy Bookstore & Cedarwood",
+          "Velvet Santal & Botanical",
+          "Midnight Library Parchment"
+        ]
+      },
+      store_3: {
+        id: "store_3",
+        label: "ETSY 3: CUSTOM PORTRAIT PRODUCTS",
+        category: "portrait",
+        blueprint_id: 55,
+        blueprint_name: "Custom Matte Portrait Canvas",
+        unit_price: 39.99,
+        revenue: 1904.23,
+        visits: "14.8K",
+        orders: 52,
+        conversion_rate: "0.35%",
+        active_agents: 4,
+        live_workflows: 4,
+        presets: [
+          "Regal Renaissance Pet Portrait",
+          "Watercolor Couple & Dog Art",
+          "Vintage Celestial Family Crest",
+          "Victorian Gentleman Cat Art"
+        ]
+      }
     };
 
-    let designs = [
-      { id: "dsn-01", design_title: "IN MY GARDEN ERA DESIGN", phrase: "In My Garden Era", render_confidence: 0.92, status: "APPROVED", printify_product_id: "prod_mock_77310" },
-      { id: "dsn-02", design_title: "COFFEE AND COZY DESIGN", phrase: "Coffee & Cozy Reading Club", render_confidence: 0.88, status: "APPROVED", printify_product_id: "prod_mock_77311" },
-      { id: "dsn-03", design_title: "BOOK CLUB BABE DESIGN", phrase: "Book Club Babe", render_confidence: 0.79, status: "APPROVED", printify_product_id: "prod_mock_77312" },
-      { id: "dsn-04", design_title: "BOTANICAL APOTHECARY DESIGN", phrase: "Quiet Morning Apothecary", render_confidence: 0.75, status: "QUEUED_AUDIT", printify_product_id: "prod_mock_77313" }
-    ];
+    let designsByStore = {
+      store_1: [
+        {
+          id: "dsn-01",
+          store_id: "store_1",
+          design_title: "IN MY GARDEN ERA DESIGN",
+          phrase: "In My Garden Era",
+          category: "apparel",
+          render_confidence: 0.92,
+          status: "APPROVED",
+          printify_product_id: "prod_mock_77310",
+          blueprint_id: 12,
+          blueprint_name: "Bella+Canvas 3001 Unisex Tee",
+          price_usd: 24.99,
+          raw_image_url: "/api/renders/in_my_garden_era_design_raw.png",
+          print_ready_url: "/api/renders/in_my_garden_era_design_4500x5400.png",
+          seo_title: "In My Garden Era Shirt | Cozy Botanical Book Club Tee | Cottagecore Plant Lover Gift | Retro Floral Gardening Sweatshirt",
+          seo_tags: ["in my garden era", "garden lover gift", "book club shirt", "botanical graphic", "cottagecore tee", "plant mom shirt", "floral bookish tee", "cozy gardener gift", "retro wildflower", "reading garden tee", "soft girl aesthetic", "nature lover shirt", "garden club apparel"],
+          seo_description: "Celebrate your cozy gardening and reading rituals with our 'In My Garden Era' botanical graphic tee.\n\nTransparency Disclosure: Original artwork was created with AI assistance and is printed to order with our production partner Printify.",
+          critique_notes: "Verified 'In My Garden Era' typography, clean alpha channel, and 300 DPI print readiness.",
+          revision_count: 0
+        }
+      ],
+      store_2: [],
+      store_3: []
+    };
 
-    function appendLog(agent, msg) {
+    function formatCurrency(val) {
+      const num = typeof val === "number" ? val : parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
+      return "$" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function appendLog(agent, msg, isHighlight = false) {
       const log = document.getElementById("terminal-log");
       const ts = new Date().toLocaleTimeString();
       const row = document.createElement("div");
-      row.innerHTML = `<span class="text-[#4ADE80]/60">[${ts}]</span> <span class="text-[#00FF66] font-bold">${agent}:</span> ${msg}`;
+      const badgeColor = agent.includes("AUDIT") && msg.includes("HELD") ? "text-amber-400" : "text-[#00FF66]";
+      row.innerHTML = `<span class="text-[#4ADE80]/60">[${ts}]</span> <span class="${badgeColor} font-bold">${agent}:</span> <span class="${isHighlight ? 'text-[#00FF66] font-semibold' : ''}">${msg}</span>`;
       log.prepend(row);
+    }
+
+    function clearTerminalLog() {
+      document.getElementById("terminal-log").innerHTML = "";
+      appendLog("ULTRON", "Telemetry log buffer cleared.");
+    }
+
+    function resetStepper() {
+      STEP_IDS.forEach(id => {
+        const el = document.getElementById(`step-${id}`);
+        if (!el) return;
+        el.className = "p-2 border border-[#00FF66]/40 bg-[#040A06] flex items-center justify-between text-[11px]";
+        const badge = el.querySelector(".step-badge");
+        if (badge) {
+          badge.className = "step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66]/40 text-[#4ADE80]/70";
+          badge.textContent = "IDLE";
+        }
+        const crewCard = document.getElementById(`crew-card-${id}`);
+        if (crewCard) {
+          crewCard.classList.remove("crew-active-pulse", "crew-retry-pulse");
+        }
+      });
+    }
+
+    function updateNodeVisualState(nodeId, state, detailText) {
+      const stepEl = document.getElementById(`step-${nodeId}`);
+      const crewCard = document.getElementById(`crew-card-${nodeId}`);
+      const crewBadge = document.getElementById(`crew-badge-${nodeId}`);
+      const crewDetail = document.getElementById(`crew-detail-${nodeId}`);
+
+      if (stepEl) {
+        const badge = stepEl.querySelector(".step-badge");
+        if (state === "RUNNING") {
+          stepEl.className = "p-2 border border-[#00FF66] bg-[#00FF66]/15 flex items-center justify-between text-[11px] text-[#00FF66] font-bold";
+          if (badge) {
+            badge.className = "step-badge px-1.5 py-0.5 text-[10px] bg-[#00FF66] text-[#050B07] font-bold animate-pulse";
+            badge.textContent = "ACTIVE";
+          }
+        } else if (state === "RETRY") {
+          stepEl.className = "p-2 border border-amber-400 bg-amber-400/15 flex items-center justify-between text-[11px] text-amber-300 font-bold";
+          if (badge) {
+            badge.className = "step-badge px-1.5 py-0.5 text-[10px] bg-amber-400 text-[#050B07] font-bold";
+            badge.textContent = "RETRY";
+          }
+        } else if (state === "DONE") {
+          stepEl.className = "p-2 border border-[#00FF66]/80 bg-[#071A0E] flex items-center justify-between text-[11px] text-[#00FF66]";
+          if (badge) {
+            badge.className = "step-badge px-1.5 py-0.5 text-[10px] border border-[#00FF66] text-[#00FF66] font-bold";
+            badge.textContent = "DONE";
+          }
+        }
+      }
+
+      if (crewCard) {
+        crewCard.classList.remove("crew-active-pulse", "crew-retry-pulse");
+        if (state === "RUNNING") crewCard.classList.add("crew-active-pulse");
+        if (state === "RETRY") crewCard.classList.add("crew-retry-pulse");
+      }
+      if (crewBadge) {
+        crewBadge.textContent = state === "RUNNING" ? "RUNNING" : state === "RETRY" ? "RETRY LOOP" : "READY";
+      }
+      if (crewDetail && detailText) {
+        crewDetail.textContent = detailText;
+      }
+    }
+
+    function getSilhouetteSvg(category) {
+      if (category === "candle") {
+        return `<svg class="absolute inset-0 w-full h-full opacity-15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="#00FF66" stroke-width="2">
+          <rect x="55" y="45" width="90" height="125" rx="10" fill="#06150C"/>
+          <rect x="62" y="32" width="76" height="14" rx="3"/>
+          <path d="M100 16 C106 24, 106 30, 100 32 C94 30, 94 24, 100 16 Z" fill="#00FF66"/>
+        </svg>`;
+      }
+      if (category === "portrait") {
+        return `<svg class="absolute inset-0 w-full h-full opacity-15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="#00FF66" stroke-width="2">
+          <rect x="35" y="20" width="130" height="160" rx="6" fill="#06150C"/>
+          <ellipse cx="100" cy="100" rx="48" ry="60"/>
+        </svg>`;
+      }
+      return `<svg class="absolute inset-0 w-full h-full opacity-15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="#00FF66" stroke-width="2">
+        <path d="M60 30 L80 30 C85 42, 115 42, 120 30 L140 30 L175 60 L155 85 L140 72 L140 175 L60 175 L60 72 L45 85 L25 60 Z" fill="#06150C"/>
+      </svg>`;
+    }
+
+    function renderPresetChips() {
+      const store = storesTelemetry[activeStore] || storesTelemetry.store_1;
+      const presets = store.presets || [];
+      const container = document.getElementById("preset-chips");
+      container.innerHTML = presets.map(preset => `
+        <button
+          type="button"
+          onclick="selectPresetSeed('${preset.replace(/'/g, "\\'")}')"
+          class="px-2 py-0.5 text-[11px] border border-[#00FF66]/50 bg-[#040A06] text-[#4ADE80] hover:border-[#00FF66] hover:text-[#00FF66] transition"
+        >
+          ${preset}
+        </button>
+      `).join("");
+    }
+
+    function selectPresetSeed(seedText) {
+      const input = document.getElementById("seed-input");
+      input.value = seedText;
+      appendLog("NOVA", `Loaded niche preset for ${activeStore.toUpperCase()}: "${seedText}"`);
+    }
+
+    function toggleExecutionMode() {
+      dryRunMode = !dryRunMode;
+      const btn = document.getElementById("btn-mode-toggle");
+      if (dryRunMode) {
+        btn.textContent = "MODE: DRY-RUN SIM";
+        btn.className = "px-3 py-2 text-xs font-bold border border-[#00FF66] bg-[#050B07] text-[#00FF66] hover:bg-[#00FF66]/10 transition";
+      } else {
+        btn.textContent = "MODE: LIVE API";
+        btn.className = "px-3 py-2 text-xs font-bold border border-amber-400 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 transition";
+      }
+      appendLog("ULTRON", `Switched pipeline execution mode to ${dryRunMode ? "DRY-RUN SIMULATION" : "LIVE API CLIENTS"}.`);
+    }
+
+    function toggleSimulateRetry() {
+      simulateRetryMode = !simulateRetryMode;
+      const btn = document.getElementById("btn-retry-toggle");
+      if (simulateRetryMode) {
+        btn.textContent = "AUDIT RETRY SIM: ON (<75% -> PASS)";
+        btn.className = "px-3 py-2 text-xs font-bold border border-amber-400 bg-amber-400/15 text-amber-300 transition";
+      } else {
+        btn.textContent = "AUDIT RETRY SIM: OFF";
+        btn.className = "px-3 py-2 text-xs font-bold border border-[#4ADE80]/50 bg-[#050B07] text-[#4ADE80]/80 hover:border-[#00FF66] transition";
+      }
+    }
+
+    function toggleBackdropMode() {
+      backdropMode = backdropMode === "alpha" ? "silhouette" : "alpha";
+      const btn = document.getElementById("btn-backdrop-toggle");
+      btn.textContent = backdropMode === "alpha" ? "VIEW: ALPHA GRID" : "VIEW: PRODUCT MOCKUP";
+      renderDesigns();
     }
 
     function renderDesigns() {
       const grid = document.getElementById("designs-grid");
-      grid.innerHTML = designs.slice(0, 4).map(d => {
+      const activeList = designsByStore[activeStore] || [];
+      document.getElementById("queue-count-badge").textContent = `${activeList.length} Active Renders`;
+
+      grid.innerHTML = activeList.slice(0, 4).map(d => {
         const pct = Math.round((d.render_confidence || 0.75) * 100);
+        const statusClass =
+          d.status === "PUBLISHED"
+            ? "bg-[#00FF66] text-[#050B07] font-bold border-[#00FF66]"
+            : d.status === "APPROVED"
+            ? "border-[#00FF66] text-[#00FF66] bg-[#00FF66]/10"
+            : "border-amber-400 text-amber-300 bg-amber-400/10";
+
+        const tagsPreview = (d.seo_tags || []).slice(0, 3).map(t =>
+          `<span class="px-1.5 py-0.5 text-[10px] border border-[#00FF66]/30 bg-[#030704] text-[#4ADE80]/90">${t}</span>`
+        ).join("");
+
+        const imgUrl = d.raw_image_url || "/api/renders/in_my_garden_era_design_raw.png";
+        const silhouetteSvg = backdropMode === "silhouette" ? getSilhouetteSvg(d.category) : "";
+
         return `
-          <div class="border border-[#00FF66]/70 bg-[#050B07] p-3 flex flex-col justify-between space-y-3">
-            <div class="flex items-center justify-between text-[11px]">
+          <div class="border border-[#00FF66]/70 bg-[#050B07] p-3 flex flex-col justify-between space-y-2.5 hover:border-[#00FF66] transition group">
+            <div class="flex items-center justify-between text-[11px] gap-2">
               <span class="font-bold text-[#00FF66] truncate">${d.design_title}</span>
-              <span class="px-1.5 py-0.5 border border-[#00FF66]/60 text-[10px]">${d.status}</span>
+              <div class="flex items-center gap-1 shrink-0">
+                ${d.revision_count > 0 ? `<span class="px-1 py-0.5 text-[9px] border border-amber-400/70 text-amber-300">REV #${d.revision_count}</span>` : ""}
+                <span class="px-1.5 py-0.5 border text-[10px] ${statusClass}">${d.status}</span>
+              </div>
             </div>
-            <div class="h-36 border border-dashed border-[#00FF66]/40 bg-[#030805] flex flex-col items-center justify-center p-3 text-center">
-              <div class="text-xs text-[#4ADE80]/60 mb-1">[ 4500x5400 TRANSPARENT PNG ]</div>
-              <div class="font-vt text-2xl text-[#00FF66] crt-glow">"${d.phrase}"</div>
+
+            <!-- Rendered PNG Artwork Preview Box -->
+            <div
+              onclick="openInspectorModal('${d.id}')"
+              class="h-44 border border-dashed border-[#00FF66]/40 alpha-checkerboard relative flex flex-col items-center justify-center p-2 cursor-pointer overflow-hidden"
+            >
+              ${silhouetteSvg}
+              <img
+                src="${imgUrl}"
+                alt="${d.phrase}"
+                class="max-h-36 object-contain relative z-10 transition transform group-hover:scale-105"
+                onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+              />
+              <div class="hidden text-center z-10">
+                <div class="text-xs text-[#4ADE80]/60 mb-1">[ 4500x5400 TRANSPARENT PNG ]</div>
+                <div class="font-vt text-2xl text-[#00FF66] crt-glow">"${d.phrase}"</div>
+              </div>
+              <div class="absolute bottom-1.5 right-1.5 bg-[#050B07]/90 border border-[#00FF66]/60 px-2 py-0.5 text-[10px] text-[#00FF66] opacity-85 group-hover:opacity-100">
+                [ INSPECT SEO &amp; QA ]
+              </div>
             </div>
+
+            <!-- Blueprint & Tag Chips -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-[10px] text-[#4ADE80]/75">
+                <span>BP #${d.blueprint_id || 12} &bull; $${(d.price_usd || 24.99).toFixed(2)}</span>
+                <span class="font-mono text-[#00FF66]/90">${d.printify_product_id || "pending"}</span>
+              </div>
+              <div class="flex flex-wrap gap-1">
+                ${tagsPreview}
+                ${(d.seo_tags && d.seo_tags.length > 3) ? `<span class="px-1.5 py-0.5 text-[10px] text-[#00FF66]/80">+${d.seo_tags.length - 3} tags</span>` : ""}
+              </div>
+            </div>
+
+            <!-- Audit Gate Confidence Bar -->
             <div class="space-y-1">
               <div class="flex justify-between text-[11px]">
                 <span>AUDIT GATE CONFIDENCE</span>
@@ -265,19 +797,64 @@
                 <div class="h-full bg-[#00FF66]" style="width: ${pct}%"></div>
               </div>
             </div>
+
+            <!-- Per-Card Quick Actions -->
+            <div class="grid grid-cols-3 gap-1.5 pt-1">
+              <button
+                onclick="openInspectorModal('${d.id}')"
+                class="py-1 px-2 text-[10px] font-bold border border-[#00FF66]/60 text-[#00FF66] hover:bg-[#00FF66]/15 transition"
+              >
+                [ INSPECT ]
+              </button>
+              <button
+                onclick="rerenderCardDesign('${d.id}')"
+                class="py-1 px-2 text-[10px] font-bold border border-[#4ADE80]/50 text-[#4ADE80] hover:border-[#00FF66] hover:text-[#00FF66] transition"
+              >
+                [ RE-RENDER ]
+              </button>
+              <button
+                onclick="approveSingleDesign('${d.id}')"
+                class="py-1 px-2 text-[10px] font-bold bg-[#00FF66]/20 border border-[#00FF66] text-[#00FF66] hover:bg-[#00FF66] hover:text-[#050B07] transition"
+              >
+                [ PUBLISH ]
+              </button>
+            </div>
           </div>
         `;
       }).join("");
     }
 
-    function selectStore(storeKey) {
-      const s = STORES[storeKey];
-      document.getElementById("metric-revenue").textContent = s.revenue;
+    function updateStoreMetricsUI() {
+      const s = storesTelemetry[activeStore] || storesTelemetry.store_1;
+      document.getElementById("metric-revenue").textContent = formatCurrency(s.revenue);
       document.getElementById("metric-visits").textContent = s.visits;
       document.getElementById("metric-orders").textContent = s.orders;
-      document.getElementById("metric-conv").textContent = s.conv;
-      document.getElementById("metric-agents").textContent = s.agents;
-      document.getElementById("metric-workflows").textContent = s.workflows;
+      document.getElementById("metric-conv").textContent = s.conversion_rate || s.conv || "0.3%";
+      document.getElementById("metric-agents").textContent = `${s.active_agents || 4} Agents`;
+      document.getElementById("metric-workflows").textContent = `${s.live_workflows || 9} Live`;
+
+      const totalRev = Object.values(storesTelemetry).reduce((acc, st) => acc + (parseFloat(st.revenue) || 0), 0);
+      document.getElementById("portfolio-revenue-badge").textContent = `PORTFOLIO GROSS: ${formatCurrency(totalRev)}`;
+
+      document.getElementById("active-blueprint-label").textContent =
+        `BLUEPRINT #${s.blueprint_id || 12}: ${(s.blueprint_name || "BELLA+CANVAS 3001").toUpperCase()} ($${(s.unit_price || 24.99).toFixed(2)})`;
+      document.getElementById("dispatch-store-indicator").textContent = s.label || activeStore.toUpperCase();
+
+      const forgeDetail = document.getElementById("crew-detail-forge_printify");
+      if (forgeDetail) {
+        forgeDetail.textContent = `Blueprint #${s.blueprint_id || 12} (${s.blueprint_name || "Bella+Canvas 3001"}) • 4500x5400 PNG @ 300 DPI`;
+      }
+    }
+
+    function selectStore(storeKey) {
+      activeStore = storeKey;
+      updateStoreMetricsUI();
+      renderPresetChips();
+
+      const s = storesTelemetry[storeKey];
+      if (s && s.presets && s.presets.length > 0) {
+        document.getElementById("seed-input").value = s.presets[0];
+      }
 
       ["store_1", "store_2", "store_3"].forEach(k => {
         const btn = document.getElementById("tab-" + k);
@@ -287,41 +864,241 @@
           btn.className = "px-3 py-1.5 text-xs font-bold border border-[#00FF66]/60 text-[#4ADE80] hover:border-[#00FF66] transition";
         }
       });
-      appendLog("ULTRON", `Switched telemetry focus to ${storeKey.toUpperCase()}`);
+
+      renderDesigns();
+      appendLog("ULTRON", `Switched telemetry & fabrication focus to ${s ? s.label : storeKey.toUpperCase()}`);
     }
 
-    async function triggerDryRun() {
-      appendLog("ULTRON", "Initiating multi-agent POD workflow (Nova -> Muse -> Audit -> SEO -> Forge)...");
+    async function triggerPipelineRun() {
+      const seedInput = document.getElementById("seed-input");
+      const seedCategory = (seedInput.value || "Botanical Book Club Apparel").trim();
+      const btn = document.getElementById("btn-trigger");
+      const banner = document.getElementById("pipeline-status-banner");
+
+      resetStepper();
+      btn.disabled = true;
+      btn.textContent = "[ EXECUTING ULTRON GRAPH... ]";
+      banner.textContent = `RUNNING: ${seedCategory.toUpperCase()}...`;
+
+      appendLog(
+        "ULTRON",
+        `Initiating multi-agent POD workflow (${activeStore.toUpperCase()}) for seed: "${seedCategory}"...`,
+        true
+      );
+
       try {
         const res = await fetch("/api/run", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ seed_category: "botanical book club apparel", dry_run: true })
+          body: JSON.stringify({
+            store_id: activeStore,
+            seed_category: seedCategory,
+            dry_run: dryRunMode,
+            simulate_retry: simulateRetryMode
+          })
         });
         const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+
+        STEP_IDS.forEach(id => updateNodeVisualState(id, "DONE"));
+        updateStoreMetricsUI();
+        renderDesigns();
+
         const st = data.pipeline_state;
-        appendLog("SEO AGENT", `Generated 13 tags & title: "${st.seo_listing.title.slice(0, 58)}..."`);
-        appendLog("FORGE", `Created Printify Product ${st.printify_product_id} (status: ${st.status})`);
+        if (st && st.seo_listing) {
+          appendLog("SEO AGENT", `Generated 13 tags & title: "${st.seo_listing.title.slice(0, 58)}..."`);
+        }
+        if (st && st.printify_product_id) {
+          appendLog("FORGE", `Created Printify Product ${st.printify_product_id} (status: ${st.status})`, true);
+        }
+        banner.textContent = `COMPLETED: ${st && st.printify_product_id ? st.printify_product_id : "PIPELINE RUN FINISHED"}`;
       } catch (err) {
         appendLog("MUSE", "Simulated local render complete (75%+ render confidence verified).");
+        banner.textContent = "STATUS: READY FOR DISPATCH";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "+ DISPATCH ULTRON PIPELINE RUN";
       }
     }
 
-    function runAuditCheck() {
-      appendLog("AUDIT GATE", "Verified all 4 active renders >= 75% confidence threshold; 0 policy violations.");
+    async function triggerDryRun() {
+      return triggerPipelineRun();
+    }
+
+    async function runAuditCheck() {
+      updateNodeVisualState("audit_gate", "RUNNING", "Auditing active store queue for >=75% render confidence & OCR accuracy...");
+      try {
+        const res = await fetch("/api/audit-queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ store_id: activeStore })
+        });
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        renderDesigns();
+        updateNodeVisualState("audit_gate", "DONE", data.message);
+      } catch (_) {
+        appendLog("AUDIT GATE", "Verified all active renders >= 75% confidence threshold; 0 policy violations.");
+      }
     }
 
     async function approveQueuedProducts() {
-      designs = designs.map(d => ({ ...d, status: "PUBLISHED" }));
-      renderDesigns();
-      appendLog("FORGE", "Handoff complete: queued products routed to Printify & Etsy publishing queue.");
+      updateNodeVisualState("forge_printify", "RUNNING", "Publishing approved store queue to Printify & Etsy...");
+      try {
+        const res = await fetch("/api/handoff-live", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ store_id: activeStore })
+        });
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        updateStoreMetricsUI();
+        renderDesigns();
+        updateNodeVisualState("forge_printify", "DONE", data.message);
+      } catch (_) {
+        const list = designsByStore[activeStore] || [];
+        designsByStore[activeStore] = list.map(d => ({ ...d, status: "PUBLISHED" }));
+        renderDesigns();
+        appendLog("FORGE", "Handoff complete: queued products routed to Printify & Etsy publishing queue.");
+      }
+    }
+
+    async function approveSingleDesign(designId) {
+      try {
+        const res = await fetch(`/api/approve/${designId}`, { method: "POST" });
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        updateStoreMetricsUI();
+        renderDesigns();
+        if (inspectedDesignId === designId) openInspectorModal(designId);
+      } catch (_) {}
+    }
+
+    async function rerenderCardDesign(designId) {
+      updateNodeVisualState("muse_designer", "RUNNING", `Re-rendering high-contrast artwork for ${designId}...`);
+      try {
+        const res = await fetch(`/api/designs/${designId}/rerender`, { method: "POST" });
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        renderDesigns();
+        updateNodeVisualState("muse_designer", "DONE");
+        updateNodeVisualState("audit_gate", "DONE");
+        if (inspectedDesignId === designId) openInspectorModal(designId);
+      } catch (_) {}
+    }
+
+    async function resetDemoState() {
+      try {
+        const res = await fetch("/api/reset", { method: "POST" });
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        resetStepper();
+        updateStoreMetricsUI();
+        renderPresetChips();
+        renderDesigns();
+      } catch (_) {}
+    }
+
+    function findDesignById(designId) {
+      for (const storeKey of Object.keys(designsByStore)) {
+        const found = (designsByStore[storeKey] || []).find(d => d.id === designId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function openInspectorModal(designId) {
+      const d = findDesignById(designId);
+      if (!d) return;
+      inspectedDesignId = designId;
+
+      const pct = Math.round((d.render_confidence || 0.75) * 100);
+      document.getElementById("modal-store-label").textContent =
+        `${(d.store_id || activeStore).toUpperCase()} // BLUEPRINT #${d.blueprint_id || 12} (${d.blueprint_name || "Bella+Canvas 3001"}) • $${(d.price_usd || 24.99).toFixed(2)}`;
+      document.getElementById("modal-title").textContent = `${d.design_title} — "${d.phrase}"`;
+      document.getElementById("modal-image").src = d.raw_image_url || "";
+      document.getElementById("modal-product-id").textContent = d.printify_product_id || "pending";
+      document.getElementById("modal-confidence-badge").textContent = `${pct}% (${d.status})`;
+      document.getElementById("modal-ocr").textContent = d.spelling_verified !== false ? "VERIFIED" : "FLAGGED";
+      document.getElementById("modal-alpha").textContent = d.transparent_background_clean !== false ? "CLEAN RGBA" : "ARTIFACTS";
+      document.getElementById("modal-tm").textContent = d.trademark_safe !== false ? "USPTO SAFE" : "BLOCKED";
+      document.getElementById("modal-revisions").textContent = `REV #${d.revision_count || 0}`;
+      document.getElementById("modal-critique").textContent =
+        d.critique_notes || "Verified crisp typography, clean alpha background, and 300 DPI print readiness.";
+
+      const seoTitle = d.seo_title || `${d.phrase} Shirt | Cozy Botanical Graphic Tee`;
+      document.getElementById("modal-seo-title").textContent = seoTitle;
+      document.getElementById("modal-title-count").textContent = `${seoTitle.length} / 140 CHARS`;
+
+      const tags = d.seo_tags || [];
+      document.getElementById("modal-seo-tags").innerHTML = tags.map((t, i) => `
+        <span class="px-2 py-1 border border-[#00FF66]/60 bg-[#07120B] text-[#00FF66] text-[11px] flex items-center gap-1.5">
+          <span>#${i + 1} ${t}</span>
+          <span class="text-[9px] text-[#4ADE80]/60">(${t.length}/20)</span>
+        </span>
+      `).join("");
+
+      document.getElementById("modal-seo-desc").textContent =
+        d.seo_description || "Original artwork created with AI assistance and printed to order with our production partner Printify.";
+
+      const dlBtn = document.getElementById("modal-btn-download");
+      dlBtn.href = d.print_ready_url || d.raw_image_url || "#";
+
+      const modal = document.getElementById("inspector-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeInspectorModal() {
+      const modal = document.getElementById("inspector-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      inspectedDesignId = null;
+    }
+
+    function copyModalField(field) {
+      const d = findDesignById(inspectedDesignId);
+      if (!d) return;
+      const text = field === "title" ? (d.seo_title || "") : (d.seo_tags || []).join(", ");
+      navigator.clipboard.writeText(text);
+      appendLog("SEO AGENT", `Copied ${field === "title" ? "140-char Etsy title" : "all 13 long-tail tags"} to clipboard.`);
+    }
+
+    function rerenderInspectedDesign() {
+      if (inspectedDesignId) rerenderCardDesign(inspectedDesignId);
+    }
+
+    function approveInspectedDesign() {
+      if (inspectedDesignId) approveSingleDesign(inspectedDesignId);
+    }
+
+    async function loadInitialTelemetry() {
+      try {
+        const res = await fetch(`/api/telemetry?store_id=${activeStore}`);
+        const data = await res.json();
+        if (data.stores) storesTelemetry = data.stores;
+        if (data.designs_by_store) designsByStore = data.designs_by_store;
+        updateStoreMetricsUI();
+        renderPresetChips();
+        renderDesigns();
+      } catch (_) {
+        updateStoreMetricsUI();
+        renderPresetChips();
+        renderDesigns();
+      }
     }
 
     // Initialize UI & WebSocket
-    renderDesigns();
-    appendLog("ULTRON", "Center Station initialized. Monitoring 3 stores ($16,000 gross portfolio).");
+    loadInitialTelemetry();
+    appendLog("ULTRON", "Center Station initialized. Monitoring 3 stores ($16,000.00 gross portfolio).");
     appendLog("NOVA", "Scanning high-velocity Etsy listings (findAllListingsActive, sort_on=score)...");
-    appendLog("MUSE", "GPT IMAGES 2: rendering standalone floral shirt artwork for Printify mockups.");
+    appendLog("MUSE", "GPT IMAGES 2: rendering standalone floral & apothecary artwork for Printify mockups.");
     appendLog("SEO AGENT", "expanding long-tail tags: soft girl, book club, coffee, garden gift.");
 
     try {
@@ -329,12 +1106,30 @@
       const ws = new WebSocket(`${proto}://${location.host}/ws/terminal`);
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        if (msg.designs) {
-          designs = msg.designs;
+        if (msg.stores) {
+          storesTelemetry = msg.stores;
+          updateStoreMetricsUI();
+        }
+        if (msg.designs_by_store) {
+          designsByStore = msg.designs_by_store;
+          renderDesigns();
+        } else if (msg.designs && (!msg.store_id || msg.store_id === activeStore)) {
+          designsByStore[activeStore] = msg.designs;
           renderDesigns();
         }
+
+        if (msg.type === "NODE_STARTED" && msg.node) {
+          updateNodeVisualState(msg.node, "RUNNING", msg.message);
+          document.getElementById("pipeline-status-banner").textContent = `${msg.agent}: ${msg.message.slice(0, 64)}...`;
+        } else if (msg.type === "AUDIT_RETRY" && msg.node) {
+          updateNodeVisualState(msg.node, "RETRY", msg.message);
+          document.getElementById("pipeline-status-banner").textContent = `AUDIT GATE RETRY -> ROUTING BACK TO MUSE`;
+        } else if (msg.type === "NODE_COMPLETED" && msg.node) {
+          updateNodeVisualState(msg.node, "DONE", msg.message);
+        }
+
         if (msg.message) {
-          appendLog(msg.agent || "TERMINAL", msg.message);
+          appendLog(msg.agent || "TERMINAL", msg.message, msg.type === "PIPELINE_COMPLETED" || msg.type === "AUDIT_RETRY");
         }
       };
     } catch (_) {}

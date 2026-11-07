@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -35,6 +36,18 @@ class Settings(BaseSettings):
     min_render_confidence: float = Field(default=0.75, ge=0.0, le=1.0, alias="MIN_RENDER_CONFIDENCE")
     auto_publish_enabled: bool = Field(default=False, alias="AUTO_PUBLISH_ENABLED")
     output_dir: Path = Field(default=PROJECT_ROOT / "artifacts" / "renders", alias="OUTPUT_DIR")
+
+    # Storage & Container Configuration (PostgreSQL + S3/MinIO Object Storage)
+    database_url: Optional[str] = Field(
+        default="postgresql://etsy_admin:etsy_secret_password@localhost:5434/etsy_pod_db",
+        alias="DATABASE_URL",
+    )
+    s3_enabled: bool = Field(default=False, alias="S3_ENABLED")
+    s3_endpoint_url: Optional[str] = Field(default="http://localhost:9000", alias="S3_ENDPOINT_URL")
+    s3_access_key: Optional[str] = Field(default="minioadmin", alias="S3_ACCESS_KEY")
+    s3_secret_key: Optional[str] = Field(default="minioadmin123", alias="S3_SECRET_KEY")
+    s3_bucket_name: str = Field(default="etsy-renders", alias="S3_BUCKET_NAME")
+    s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
 
 def get_settings() -> Settings:

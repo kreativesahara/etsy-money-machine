@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: etsy_pod_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: etsy_admin
+      POSTGRES_PASSWORD: etsy_secret_password
+      POSTGRES_DB: etsy_pod_db
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - etsy_pg_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U etsy_admin -d etsy_pod_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: etsy_pod_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - etsy_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: etsy_pod_terminal
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://etsy_admin:etsy_secret_password@postgres:5432/etsy_pod_db
+      S3_ENABLED: "true"
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: etsy-renders
+      S3_REGION: us-east-1
+      OUTPUT_DIR: /app/artifacts/renders
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - etsy_renders_data:/app/artifacts
+
+volumes:
+  etsy_pg_data:
+  etsy_minio_data:
+  etsy_renders_data:
