@@ -224,7 +224,7 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=str,
-        default="artifacts/renders",
+        default=str(Path(__file__).resolve().parent / "artifacts" / "renders"),
         help="Directory to store raw and 4500x5400 @ 300 DPI upscaled artwork.",
     )
     parser.add_argument(

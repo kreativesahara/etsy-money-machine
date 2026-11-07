@@ -2,12 +2,14 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables or .env file."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -32,7 +34,7 @@ class Settings(BaseSettings):
     # Pipeline Thresholds & Output
     min_render_confidence: float = Field(default=0.75, ge=0.0, le=1.0, alias="MIN_RENDER_CONFIDENCE")
     auto_publish_enabled: bool = Field(default=False, alias="AUTO_PUBLISH_ENABLED")
-    output_dir: Path = Field(default=Path("artifacts/renders"), alias="OUTPUT_DIR")
+    output_dir: Path = Field(default=PROJECT_ROOT / "artifacts" / "renders", alias="OUTPUT_DIR")
 
 
 def get_settings() -> Settings:
