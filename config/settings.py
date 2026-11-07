@@ -50,5 +50,30 @@ class Settings(BaseSettings):
     s3_region: str = Field(default="us-east-1", alias="S3_REGION")
 
 
+    def missing_live_credentials(self) -> list[str]:
+        """Env var names whose values are still the built-in placeholder defaults.
+
+        A live (non dry-run) pipeline run calls OpenAI, Etsy and Printify, so
+        all of these must be set to real values in .env or the environment.
+        """
+        required = (
+            "openai_api_key",
+            "etsy_api_keystring",
+            "etsy_shared_secret",
+            "printify_api_token",
+            "printify_shop_id",
+        )
+        fields = type(self).model_fields
+        return [
+            fields[name].alias or name.upper()
+            for name in required
+            if getattr(self, name) == fields[name].default
+        ]
+
+
+class MissingCredentialsError(ValueError):
+    """Raised when a live pipeline run is attempted with placeholder credentials."""
+
+
 def get_settings() -> Settings:
     return Settings()

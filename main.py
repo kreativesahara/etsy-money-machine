@@ -12,7 +12,7 @@ from typing import Any, Callable
 from unittest.mock import MagicMock, patch
 from PIL import Image, ImageDraw, ImageFont
 
-from config.settings import get_settings
+from config.settings import MissingCredentialsError, get_settings
 from schemas.models import (
     AuditResult,
     EtsySEOListing,
@@ -25,6 +25,7 @@ from agents.audit_gate import run_audit_gate_node
 from agents.seo_listing import run_seo_listing_node
 from agents.forge_printify import run_forge_printify_node
 from agents.ultron_supervisor import build_ultron_graph
+from services.etsy_client import etsy_api_key_header
 from services.storage_service import StorageService
 
 STORE_BLUEPRINTS: dict[str, dict[str, Any]] = {
@@ -612,11 +613,20 @@ def execute_pipeline(
             return final_state
 
     # Live execution mode with real API clients
+    missing = settings.missing_live_credentials()
+    if missing:
+        raise MissingCredentialsError(
+            "Live run needs real credentials; these are unset or still placeholders: "
+            + ", ".join(missing)
+            + ". Copy .env.example to .env and fill them in, or use dry-run mode."
+        )
+
     from openai import OpenAI
 
     openai_client = OpenAI(api_key=settings.openai_api_key)
+    etsy_api_key = etsy_api_key_header(settings.etsy_api_keystring, settings.etsy_shared_secret)
     n_fn, m_fn, a_fn, s_fn, f_fn = _wrap_nodes(
-        lambda s: run_nova_research_node(s, openai_client, settings.etsy_api_keystring),
+        lambda s: run_nova_research_node(s, openai_client, etsy_api_key),
         lambda s: run_muse_designer_node(s, openai_client, target_output_dir),
         lambda s: run_audit_gate_node(
             s, openai_client, min_confidence=settings.min_render_confidence

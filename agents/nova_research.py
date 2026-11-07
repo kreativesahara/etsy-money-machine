@@ -27,6 +27,7 @@ def is_trademark_safe(text: str) -> bool:
 
 
 def fetch_trending_etsy_listings(api_key: str, query: str, limit: int = 25) -> list[dict]:
+    """`api_key` is the full x-api-key value, i.e. 'keystring:shared_secret'."""
     headers = {"x-api-key": api_key}
     params = {"keywords": query, "limit": limit, "sort_on": "score"}
     with httpx.Client(timeout=20.0) as client:

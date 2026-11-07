@@ -6,12 +6,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from agents.muse_designer import _slugify, upscale_to_printify_spec
+from config.settings import MissingCredentialsError
 from main import (
     STORE_BLUEPRINTS,
     _generate_mock_transparent_png_b64,
@@ -472,16 +474,25 @@ async def trigger_pipeline_run(req: RunPipelineRequest) -> Dict[str, Any]:
     # Use a brief 220ms pacing when WebSocket clients are connected so live node telemetry is visible
     delay_ms = 220 if len(manager.active_connections) > 0 else 0
 
-    state = await asyncio.to_thread(
-        execute_pipeline,
-        seed_category=req.seed_category,
-        dry_run=req.dry_run,
-        output_dir=RENDERS_DIR,
-        confidence_sequence=confidence_seq,
-        store_id=store_id,
-        event_callback=_on_node_event,
-        step_delay_ms=delay_ms,
-    )
+    try:
+        state = await asyncio.to_thread(
+            execute_pipeline,
+            seed_category=req.seed_category,
+            dry_run=req.dry_run,
+            output_dir=RENDERS_DIR,
+            confidence_sequence=confidence_seq,
+            store_id=store_id,
+            event_callback=_on_node_event,
+            step_delay_ms=delay_ms,
+        )
+    except MissingCredentialsError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except httpx.HTTPStatusError as exc:
+        resp = exc.response
+        raise HTTPException(
+            status_code=502,
+            detail=f"{resp.request.url.host} returned {resp.status_code}: {resp.text[:500]}",
+        ) from exc
 
     payload = state.model_dump()
     created_design: Optional[Dict[str, Any]] = None

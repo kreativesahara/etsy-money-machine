@@ -897,7 +897,10 @@
             simulate_retry: simulateRetryMode
           })
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.detail || `HTTP ${res.status} ${res.statusText}`);
+        }
         if (data.stores) storesTelemetry = data.stores;
         if (data.designs_by_store) designsByStore = data.designs_by_store;
 
@@ -914,8 +917,8 @@
         }
         banner.textContent = `COMPLETED: ${st && st.printify_product_id ? st.printify_product_id : "PIPELINE RUN FINISHED"}`;
       } catch (err) {
-        appendLog("MUSE", "Simulated local render complete (75%+ render confidence verified).");
-        banner.textContent = "STATUS: READY FOR DISPATCH";
+        appendLog("ULTRON", `Pipeline run failed: ${err.message}`, true);
+        banner.textContent = "STATUS: RUN FAILED";
       } finally {
         btn.disabled = false;
         btn.textContent = "+ DISPATCH ULTRON PIPELINE RUN";
